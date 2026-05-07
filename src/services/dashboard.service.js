@@ -353,6 +353,7 @@ const getOverview = async (currentUser) => {
   return {
     welcome: {
       firstName: user.firstName || 'Member',
+      isFirstVisit: !user.lastLogin,
     },
     creditsAvailable: readDecimalValue(user.timeCredits),
     stats: [
