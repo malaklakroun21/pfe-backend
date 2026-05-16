@@ -602,6 +602,23 @@ const getValidationData = async (currentUser) => {
     ['PENDING', 'IN_REVIEW'].includes(request.requestStatus)
   );
 
+  const validationRequests = activeRequests.map((request) => {
+    const skill = skillRecords.find((item) => item.skillId === request.skillId);
+    const mentor = mentorDirectory.find((item) => item.id === request.mentorUserId);
+
+    return {
+      requestId: request.requestId,
+      skillId: request.skillId,
+      skillName: skill?.skillName || '',
+      mentorUserId: request.mentorUserId,
+      mentorName: mentor?.name || '',
+      requestStatus: request.requestStatus,
+      validationScore: request.validationScore || 0,
+      submittedAt: request.submittedAt,
+      respondedAt: request.respondedAt || null,
+    };
+  });
+
   return {
     intro: {
       title: 'Validate your skills with real platform data',
@@ -634,6 +651,7 @@ const getValidationData = async (currentUser) => {
       ],
     },
     skills,
+    validationRequests,
     checklist: {
       title: 'Validation checklist',
       description: 'Use your actual backend data to see what is still missing.',

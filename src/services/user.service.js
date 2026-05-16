@@ -4,6 +4,7 @@ const path = require('path');
 
 const City = require('../models/City');
 const Country = require('../models/Country');
+const Skill = require('../models/Skill');
 const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const { ALGERIA_CITY_NAMES } = require('../constants/algeria-cities');
@@ -249,6 +250,22 @@ const extractSkillName = (payload = {}) => {
   }
 
   return normalizedSkillName;
+};
+
+const assertLearnerCanOfferSkill = async (userId, skillName) => {
+  const validatedSkill = await Skill.findOne({
+    userId,
+    skillName: new RegExp(`^${escapeRegExp(skillName)}$`, 'i'),
+    validationStatus: 'VALIDATED',
+  });
+
+  if (!validatedSkill) {
+    throw new ApiError(
+      403,
+      'Only mentor-validated skills can be added to your teach list',
+      'SKILL_NOT_VALIDATED'
+    );
+  }
 };
 
 const hasSkill = (skills = [], targetSkillName) => {
@@ -597,6 +614,10 @@ const addSkillToCurrentUser = async (user, fieldName, payload) => {
   const currentUser = ensureAuthenticatedUser(user);
   const skillName = extractSkillName(payload);
   const currentSkills = currentUser[fieldName] || [];
+
+  if (fieldName === 'offeredSkills' && String(currentUser.role || '').toUpperCase() === 'LEARNER') {
+    await assertLearnerCanOfferSkill(currentUser.userId, skillName);
+  }
 
   if (hasSkill(currentSkills, skillName)) {
     throw new ApiError(409, 'Skill already exists', 'SKILL_ALREADY_EXISTS');
